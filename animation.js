@@ -107,6 +107,41 @@ var VectorUtils = {
         return `x: ${this.x}, y: ${this.y}`;
     }
 };
+/**
+ * Computes the bezier curve using time and control points
+ * @param {Number} t 
+ * @param  {...Number} points 
+ * @returns {Object} 
+ */
+function bezier(t, ...points) {
+    if (points.length != 8) {
+        return;
+    }
+    // if (!points.every(el => el >= 0 && el <= 1)) {
+    //     return;
+    // }
+    var x =
+        (1 - t) ** 3 * points[0] + 3 * (1 - t) ** 2 * t * points[2] +
+        3 * (1 - t) * t ** 2 * points[4] +
+        t ** 3 * points[6];
+    var y =
+        (1 - t) ** 3 * points[1] + 3 * (1 - t) ** 2 * t * points[3] +
+        3 * (1 - t) * t ** 2 * points[5] +
+        t ** 3 * points[7];
+    return { x, y };
+}
+
+/**
+ * Clamp utility function
+ * @param {Number} number Input
+ * @param {Number} min Left limit
+ * @param {Number} max Right limit
+ * @returns {Number} The clamped value
+ */
+function clamp(number, min, max) {
+    return Math.max(min, Math.min(number, max));
+}
+
 var Vector2 = VectorUtils.make;
 var TimelineUtils = {
     /**
@@ -175,29 +210,6 @@ var TimelineUtils = {
         }
     },
     /**
-     * Computes the bezier curve using time and control points
-     * @param {Number} t 
-     * @param  {...Number} points 
-     * @returns {Number}
-     */
-    bezier: function (t, ...points) {
-        if (points.length != 4) {
-            return;
-        }
-        if (!points.every(el => el >= 0 && el <= 1)) {
-            return;
-        }
-        var x =
-            3 * (1 - t) ** 2 * t * points[0] +
-            3 * (1 - t) * t ** 2 * points[2] +
-            t ** 3;
-        var y =
-            3 * (1 - t) ** 2 * t * points[1] +
-            3 * (1 - t) * t ** 2 * points[3] +
-            t ** 3;
-        return y;
-    },
-    /**
      * Computes the clamped bezier using the animation progress
      * @returns {Number} [0;1]
      */
@@ -205,7 +217,7 @@ var TimelineUtils = {
         if (!this.running) {
             return;
         }
-        return this.clamp(this.bezier(this.progress(), ...this.points), 0, 1);
+        return clamp(bezier(this.progress(), ...[0, 0, ...this.points, 1, 1]).y, 0, 1);
     },
     /**
      * Stops the animation
@@ -217,16 +229,6 @@ var TimelineUtils = {
         cancelAnimationFrame(this.id);
         this.running = false;
         this.stoppedAt = Date.now();
-    },
-    /**
-     * Clamp utility function
-     * @param {Number} number Input
-     * @param {Number} min Left limit
-     * @param {Number} max Right limit
-     * @returns {Number} The clamped value
-     */
-    clamp: function (number, min, max) {
-        return Math.max(min, Math.min(number, max));
     }
 };
 var Timeline = TimelineUtils.make;
@@ -400,6 +402,19 @@ var AnimationUtils = {
      */
     stop: function () {
         this.timeline.stop();
+    },
+
+    path: function (t, ...points) {
+
+        var size = points.length;
+        if (size % 6 != 2) {
+            return;
+        }
+        var segments = ~~(size / 6);
+        var currentCurveIndex = Math.ceil(t * segments) - 1;
+        var currentCurve = points.slice(currentCurveIndex * 6, currentCurveIndex * 6 + 8);
+        var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
+        return bezier(currentCurveProgress, ...currentCurve);
     }
 };
 var Animation = AnimationUtils.make;
