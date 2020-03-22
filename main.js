@@ -30,3 +30,29 @@ var animation = Animation({
   relative: ["rotation"]
 })
 animation.start();
+var circle = document.querySelector("svg circle");
+var animation2 = Animation({
+  target: circle,
+  curve: [0, 1, 0.1, 0.9],
+  duration: 5000,
+  params: {
+    x: (t) => t.cx.baseVal.value,
+    y: (t) => t.cy.baseVal.value
+  },
+  end: {
+    x: 0,
+    y: 0
+  },
+  setters: {
+    endX: (t, x) => t.pathSegList[2].x = x,
+    endY: (t, y) => t.pathSegList[2].y = y,
+    rotation: (t, r) => t.style.transform = r,
+    color: (t, c) => t.style.stroke = c
+  },
+  formats: {
+    rotation: r => `rotate(${r}deg)`,
+    color: (r, g, b, a) => `rgba(${r},${g},${b},${a})`
+  },
+  relative: ["rotation"]
+})
+animation.start();
