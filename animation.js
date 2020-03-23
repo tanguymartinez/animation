@@ -322,7 +322,6 @@ var AnimationUtils = {
      * @property {AnimationSettings} settings
      * @property {Timeline} timeline
      * @property {Object} from
-     * @property {Object} to
      */
     /**
      * @typedef AnimationSettings
