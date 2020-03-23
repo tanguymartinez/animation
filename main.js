@@ -12,10 +12,22 @@ var animation = Animation({
     color: (t) => /^rgba\((\d+),(\d+),(\d+),(\d+(.\d+)?)\)$/.exec(t.style.stroke.replace(/\s/g, '')).filter((el, i) => i > 0 && i < 5).map(e => parseFloat(e))
   },
   end: {
-    endX: 0,
-    endY: 0,
-    rotation: 100,
-    color: [6, 8, 8, 0]
+    endX: {
+      fn: "linear",
+      args: 0
+    },
+    endY: {
+      fn: "linear",
+      args: 0
+    },
+    rotation: {
+      fn: "linear",
+      args: 100
+    },
+    color: {
+      fn: "linear",
+      args: [6, 8, 8, 0]
+    }
   },
   setters: {
     endX: (t, x) => t.pathSegList[2].x = x,
@@ -33,21 +45,22 @@ animation.start();
 var circle = document.querySelector("svg circle");
 var animation2 = Animation({
   target: circle,
-  curve: [0, 1, 0.1, 0.9],
+  curve: [0, .81, 1, 1.56],
   duration: 5000,
   params: {
-    x: (t) => t.cx.baseVal.value,
-    y: (t) => t.cy.baseVal.value
+    pos: (t) => [t.cx.baseVal.value, t.cy.baseVal.value]
   },
   end: {
-    x: 0,
-    y: 0
+    pos: {
+      fn: "path",
+      args: [90.67857, 30, 81.642856, 179.07143, 139.85119, 175.29167, 198.05952, 171.5119, 96.761905, 84.577379, 55.940475, 151.10119]
+    }
   },
   setters: {
-    endX: (t, x) => t.pathSegList[2].x = x,
-    endY: (t, y) => t.pathSegList[2].y = y,
-    rotation: (t, r) => t.style.transform = r,
-    color: (t, c) => t.style.stroke = c
+    pos: (t, { x, y }) => {
+      t.cx.baseVal.value = x;
+      t.cy.baseVal.value = y;
+    }
   },
   formats: {
     rotation: r => `rotate(${r}deg)`,
@@ -55,4 +68,4 @@ var animation2 = Animation({
   },
   relative: ["rotation"]
 })
-animation.start();
+animation2.start();
