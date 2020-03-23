@@ -351,7 +351,6 @@ var AnimationUtils = {
         obj.settings = settings;
         obj.timeline = Timeline(settings.curve, settings.duration);
         obj.from = {};
-        obj.to = {};
         obj.subscribe(obj.timeline, obj.animate);
         return obj;
     },
@@ -362,12 +361,9 @@ var AnimationUtils = {
     animate: function (progress) {
         for (const key of Object.keys(this.from)) {
             var data = this.from[key];
-            var isArray = Array.isArray(data);
             var data_copy = Array.isArray(data) ? [...data] : [data];
-            var newValue = data_copy.map(function (value, idx) {
-                var to = isArray ? this.to[key][idx] : this.to[key];
-                return value + progress * (to - value);
-            }, this);
+            var end = [this.end[key].args].flat();
+            var newValue = [this[this.end[key].fn](progress, ...data_copy, ...end)].flat();
             if (this.formats.hasOwnProperty(key)) {
                 this.setters[key](this.target, this.formats[key](...newValue));
             } else {
@@ -382,18 +378,6 @@ var AnimationUtils = {
         for (const [key, param] of Object.entries(this.params)) {
             var data = param(this.target);
             this.from[key] = data;
-            var relative = this.relative.indexOf(key) != -1;
-            var isArray = Array.isArray(data);
-            var from_copy = Array.isArray(data) ? [...data] : [data];
-            var to = from_copy.map(function (value, idx, arr) {
-                var end = isArray ? this.end[key][idx] : this.end[key];
-                if (relative) {
-                    return value + end;
-                } else {
-                    return end;
-                }
-            }, this);
-            this.to[key] = isArray ? to : to[0]
         }
         this.timeline.start();
     },
@@ -403,9 +387,13 @@ var AnimationUtils = {
     stop: function () {
         this.timeline.stop();
     },
-
+    /**
+     * Selects the current curve from a list of points and computes the bezier curve points associated
+     * @param {Number} t Progress [0;1]
+     * @param  {...<Number>} points Bezier curve points
+     * @returns {Object} x,y
+     */
     path: function (t, ...points) {
-
         var size = points.length;
         if (size % 6 != 2) {
             return;
@@ -415,6 +403,19 @@ var AnimationUtils = {
         var currentCurve = points.slice(currentCurveIndex * 6, currentCurveIndex * 6 + 8);
         var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
         return bezier(currentCurveProgress, ...currentCurve);
+    },
+    /**
+     * Computes
+     * @param {Number} t Progress [0;1]
+     * @param  {...<Number>} values Numbers to interpolate, first half is the from values, to second half is the target values
+     */
+    linear: function (t, ...values) {
+        if (values.length % 2 != 0) {
+            return;
+        }
+        return values.slice(0, values.length / 2).map(function (value, idx, arr) {
+            return value + t * (values[idx + arr.length] - value);
+        })
     }
 };
 var Animation = AnimationUtils.make;
