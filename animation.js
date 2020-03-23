@@ -217,7 +217,7 @@ var TimelineUtils = {
         if (!this.running) {
             return;
         }
-        return clamp(bezier(this.progress(), ...[0, 0, ...this.points, 1, 1]).y, 0, 1);
+        return bezier(this.progress(), ...[0, 0, ...this.points, 1, 1]).y;
     },
     /**
      * Stops the animation
@@ -399,7 +399,7 @@ var AnimationUtils = {
             return;
         }
         var segments = ~~(size / 6);
-        var currentCurveIndex = Math.ceil(t * segments) - 1;
+        var currentCurveIndex = clamp(Math.ceil(t * segments) - 1, 0, segments - 1);
         var currentCurve = points.slice(currentCurveIndex * 6, currentCurveIndex * 6 + 8);
         var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
         return bezier(currentCurveProgress, ...currentCurve);
