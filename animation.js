@@ -387,6 +387,23 @@ var AnimationUtils = {
     stop: function () {
         this.timeline.stop();
     },
+    curveProgress: function (t, offset, chunk_size, points) {
+        var size = points.length;
+        if (size % chunk_size != offset && chunk_size != offset) {
+            return;
+        }
+        var segments = ~~(size / chunk_size);
+        var currentCurveIndex = clamp(Math.ceil(t * segments) - 1, 0, segments - 1);
+        var currentCurve = points.slice(currentCurveIndex * chunk_size, currentCurveIndex * chunk_size + chunk_size + offset);
+        if (currentCurve.length < chunk_size + offset) {
+            currentCurve = [...currentCurve, ...currentCurve]
+        }
+        var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
+        return {
+            curve: currentCurve,
+            progress: currentCurveProgress
+        };
+    },
     /**
      * Selects the current curve from a list of points and computes the bezier curve points associated
      * @param {Number} t Progress [0;1]
@@ -394,28 +411,23 @@ var AnimationUtils = {
      * @returns {Object} x,y
      */
     path: function (t, ...points) {
-        var size = points.length;
-        if (size % 6 != 2) {
-            return;
-        }
-        var segments = ~~(size / 6);
-        var currentCurveIndex = clamp(Math.ceil(t * segments) - 1, 0, segments - 1);
-        var currentCurve = points.slice(currentCurveIndex * 6, currentCurveIndex * 6 + 8);
-        var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
-        return bezier(currentCurveProgress, ...currentCurve);
+        var { curve, progress } = this.curveProgress(t, 2, 6, points);
+        return bezier(progress, ...curve);
     },
     polyline: function (t, ...points) {
-        var size = points.length;
-        if (size % 2 != 0) {
-            return;
+        var lengths = [];
+        var totalLength = 0;
+        for (let i = 2; i < points.length - 1; i += 2) {
+            const v1 = Vector2(points[i - 2], points[i - 1]);
+            const v2 = Vector2(points[i], points[i + 1]);
+            lengths.push(v2.sub(v1).length());
+            totalLength += lengths[lengths.length - 1];
         }
-        var segments = ~~(size / 2);
-        var currentCurveIndex = clamp(Math.ceil(t * segments) - 1, 0, segments - 1);
-        var currentCurve = points.slice(currentCurveIndex * 2, currentCurveIndex * 2 + 4);
-        var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
+        var weights = lengths.map((el) => el / totalLength);
+        var { curve, progress } = this.curveProgress(t, 2, 2, points);
         return {
-            x: currentCurve[0] + currentCurveProgress * (currentCurve[2] - currentCurve[0]),
-            y: currentCurve[1] + currentCurveProgress * (currentCurve[3] - currentCurve[1]),
+            x: curve[0] + progress * (curve[2] - curve[0]),
+            y: curve[1] + progress * (curve[3] - curve[1]),
         };
     },
     /**
@@ -430,6 +442,15 @@ var AnimationUtils = {
         return values.slice(0, values.length / 2).map(function (value, idx, arr) {
             return value + t * (values[idx + arr.length] - value);
         })
+    },
+    steps: function (t, ...values) {
+        var segments = values.length;
+        if (segments % 2 != 0) {
+            return;
+        }
+        var currentCurveIndex = clamp(Math.ceil(t * segments) - 1, 0, segments - 1);
+        var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
+
     }
 };
 var Animation = AnimationUtils.make;
