@@ -204,6 +204,7 @@ var TimelineUtils = {
             this.dispatch(this.value());
         }
         if (this.elapsedTime() > this.duration) {
+            this.dispatch(1);
             this.stop();
         } else {
             this.id = requestAnimationFrame(this.tick.bind(this));
@@ -402,6 +403,20 @@ var AnimationUtils = {
         var currentCurve = points.slice(currentCurveIndex * 6, currentCurveIndex * 6 + 8);
         var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
         return bezier(currentCurveProgress, ...currentCurve);
+    },
+    polyline: function (t, ...points) {
+        var size = points.length;
+        if (size % 2 != 0) {
+            return;
+        }
+        var segments = ~~(size / 2);
+        var currentCurveIndex = clamp(Math.ceil(t * segments) - 1, 0, segments - 1);
+        var currentCurve = points.slice(currentCurveIndex * 2, currentCurveIndex * 2 + 4);
+        var currentCurveProgress = (t - currentCurveIndex * (1 / segments)) / (1 / segments);
+        return {
+            x: currentCurve[0] + currentCurveProgress * (currentCurve[2] - currentCurve[0]),
+            y: currentCurve[1] + currentCurveProgress * (currentCurve[3] - currentCurve[1]),
+        };
     },
     /**
      * Computes

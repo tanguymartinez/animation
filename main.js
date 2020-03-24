@@ -45,7 +45,7 @@ animation.start();
 var circle = document.querySelector("svg circle");
 var animation2 = Animation({
   target: circle,
-  curve: [0, -1, 1, 1.56],
+  curve: [.53, -0.2, 0, .28],
   duration: 5000,
   params: {
     pos: (t) => [t.cx.baseVal.value, t.cy.baseVal.value]
