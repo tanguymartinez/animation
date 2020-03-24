@@ -45,26 +45,38 @@ animation.start();
 var circle = document.querySelector("svg circle");
 var animation2 = Animation({
   target: circle,
-  curve: [.53, -0.2, 0, .28],
+  curve: [.3, -0.47, .26, 1.49],
   duration: 5000,
   params: {
-    pos: (t) => [t.cx.baseVal.value, t.cy.baseVal.value]
+    pos: (t) => [t.cx.baseVal.value, t.cy.baseVal.value],
+    size: (t) => t.r.baseVal.value,
+    color: (t) => /^rgb\((\d+),(\d+),(\d+)\)$/.exec(t.style.fill.replace(/\s/g, '')).filter((el, i) => i > 0 && i < 4).map(e => parseFloat(e))
   },
   end: {
     pos: {
       fn: "path",
       args: [90.67857, 30, 81.642856, 179.07143, 139.85119, 175.29167, 198.05952, 171.5119, 96.761905, 84.577379, 55.940475, 151.10119]
+    },
+    size: {
+      fn: "polyline",
+      args: [20, 20, 0, 0]
+    },
+    color: {
+      fn: "linear",
+      args: [230, 119, 16]
     }
   },
   setters: {
     pos: (t, { x, y }) => {
       t.cx.baseVal.value = x;
       t.cy.baseVal.value = y;
-    }
+    },
+    size: (t, { x }) => t.r.baseVal.value = x,
+    color: (t, c) => t.style.fill = c
   },
   formats: {
     rotation: r => `rotate(${r}deg)`,
-    color: (r, g, b, a) => `rgba(${r},${g},${b},${a})`
+    color: (r, g, b) => `rgb(${r},${g},${b})`
   },
   relative: ["rotation"]
 })

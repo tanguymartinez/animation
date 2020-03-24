@@ -442,7 +442,7 @@ var AnimationUtils = {
     polyline: function (t, ...points) {
         var lengths = [];
         var totalLength = 0;
-        for (let i = 2; i < points.length - 1; i += 2) {
+        for (let i = 2; i < points.length; i += 2) {
             const v1 = Vector2(points[i - 2], points[i - 1]);
             const v2 = Vector2(points[i], points[i + 1]);
             lengths.push(v2.sub(v1).length());
