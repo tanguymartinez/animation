@@ -101,7 +101,7 @@ var VectorUtils = {
      * @returns {Number}
      */
     length: function () {
-        return Math.sqrt(this.x ** 2, this.y ** 2);
+        return Math.sqrt(this.x ** 2 + this.y ** 2);
     },
     toString: function () {
         return `x: ${this.x}, y: ${this.y}`;
@@ -363,6 +363,28 @@ var AnimationUtils = {
             var data = this.from[key];
             var data_copy = Array.isArray(data) ? [...data] : [data];
             var end = [this.end[key].args].flat();
+            if (this.relative.indexOf(key) != -1) {
+                switch (this.end[key].fn) {
+                    case "path":
+                    case "polyline":
+                        end = end.reduce((prev, value) => {
+                            prev.push(prev[prev.length - 2] + value);
+                            return prev;
+                        }, [...data_copy]).slice(2);
+                        break;
+                    case "steps":
+                        end = end.reduce((prev, value) => {
+                            prev.push(prev[prev.length - 1] + value);
+                            return prev;
+                        }, [...data_copy]).slice(1);
+                        break;
+                    case "linear":
+                        end = end.map((value, idx) => data_copy[idx] + value)
+                        break;
+                    default:
+                        break;
+                }
+            }
             var newValue = [this[this.end[key].fn](progress, ...data_copy, ...end)].flat();
             if (this.formats.hasOwnProperty(key)) {
                 this.setters[key](this.target, this.formats[key](...newValue));
@@ -391,12 +413,11 @@ var AnimationUtils = {
         var currentCurveIndex = 0;
         for (let i = 0, acc = 0; i < weights.length; i++) {
             acc += weights[i];
+            currentCurveIndex = i;
             if (t <= acc) {
-                currentCurveIndex = i;
                 break;
-            } else if (t > acc) {
+            } else {
                 currentCurveIndex = weights.length - 1;
-                break;
             }
         }
         var currentCurve = points.slice(currentCurveIndex * chunk_size, currentCurveIndex * chunk_size + chunk_size + offset);
@@ -454,6 +475,25 @@ var AnimationUtils = {
             x: curve[0] + progress * (curve[2] - curve[0]),
             y: curve[1] + progress * (curve[3] - curve[1]),
         };
+    },
+
+    /**
+     * 
+     * @param {Number} t Progress [0;1]
+     * @param  {...Number} points Step points (e.g. x1,x2,x3)
+     * @returns {Object} x,y
+     */
+    steps: function (t, ...points) {
+        var lengths = [];
+        var totalLength = 0;
+        for (let i = 1; i < points.length; i += 1) {
+            const v = Vector2(points[i - 1], points[i]);
+            lengths.push(v.length());
+            totalLength += lengths[lengths.length - 1];
+        }
+        var weights = lengths.map((el) => el / totalLength);
+        var { curve, progress } = this.curveProgress(t, weights, 1, 1, points);
+        return curve[0] + progress * (curve[1] - curve[0]);
     },
     /**
      * Computes linear interpolations
