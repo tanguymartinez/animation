@@ -58,8 +58,8 @@ var animation2 = Animation({
       args: [90.67857, 30, 81.642856, 179.07143, 139.85119, 175.29167, 198.05952, 171.5119, 96.761905, 84.577379, 55.940475, 151.10119]
     },
     size: {
-      fn: "polyline",
-      args: [20, 20, 0, 0]
+      fn: "steps",
+      args: [0, 10, -10, 10]
     },
     color: {
       fn: "linear",
@@ -71,13 +71,13 @@ var animation2 = Animation({
       t.cx.baseVal.value = x;
       t.cy.baseVal.value = y;
     },
-    size: (t, { x }) => t.r.baseVal.value = x,
+    size: (t, s) => t.r.baseVal.value = s,
     color: (t, c) => t.style.fill = c
   },
   formats: {
     rotation: r => `rotate(${r}deg)`,
     color: (r, g, b) => `rgb(${r},${g},${b})`
   },
-  relative: ["rotation"]
+  relative: ["color"]
 })
 animation2.start();
