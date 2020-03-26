@@ -41,12 +41,14 @@ var animation = Animation({
   },
   relative: ["rotation"]
 })
-animation.start();
+// animation.start().then(() => {
+//   console.log(("fini"));
+// });
 var circle = document.querySelector("svg circle");
 var animation2 = Animation({
   target: circle,
   curve: [.3, -0.47, .26, 1.49],
-  duration: 5000,
+  duration: 4000,
   params: {
     pos: (t) => [t.cx.baseVal.value, t.cy.baseVal.value],
     size: (t) => t.r.baseVal.value,
@@ -59,7 +61,7 @@ var animation2 = Animation({
     },
     size: {
       fn: "steps",
-      args: [0, 10, -10, 10]
+      args: [0, 10, -10, 10, -10, -10, 10 - 10, 10]
     },
     color: {
       fn: "linear",
@@ -80,4 +82,6 @@ var animation2 = Animation({
   },
   relative: ["color"]
 })
-animation2.start();
+animation.start().then(() => {
+  animation2.start();
+});

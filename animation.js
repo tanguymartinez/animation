@@ -152,6 +152,7 @@ var TimelineUtils = {
      * @property {Number} stoppedAt End point in time
      * @property {Boolean} running Whether the animation is running or not
      * @property {Number} id setAnimationFrame id
+     * @property {Function} callback Callback called when the timeline completes
      */
     /**
      * Creates a timeline
@@ -159,7 +160,7 @@ var TimelineUtils = {
      * @param {Number} duration Duration of the animation
      * @returns {Timeline}
      */
-    make: function (points, duration) {
+    make: function (points, duration, callback) {
         var obj = Object.create(TimelineUtils);
         obj.duration = duration;
         obj.points = points;
@@ -167,6 +168,7 @@ var TimelineUtils = {
         obj.running = false;
         obj.stoppedAt = 0;
         obj.id = null;
+        obj.callback = callback;
 
         return withMixin(obj, Observed());
     },
@@ -230,6 +232,7 @@ var TimelineUtils = {
         cancelAnimationFrame(this.id);
         this.running = false;
         this.stoppedAt = Date.now();
+        this.callback();
     }
 };
 var Timeline = TimelineUtils.make;
@@ -349,9 +352,12 @@ var AnimationUtils = {
         var obj = withMixin(Object.create(AnimationUtils), Observer());
         Object.assign(obj, settings);
         obj.settings = settings;
-        obj.timeline = Timeline(settings.curve, settings.duration);
+        obj.timeline = Timeline(settings.curve, settings.duration, function () {
+            obj.next();
+        });
         obj.from = {};
         obj.subscribe(obj.timeline, obj.animate);
+        obj.next = () => { };
         return obj;
     },
     /**
@@ -402,12 +408,16 @@ var AnimationUtils = {
             this.from[key] = data;
         }
         this.timeline.start();
+        return new Promise(function (resolve, reject) {
+            this.next = resolve;
+        }.bind(this));
     },
     /**
      * Stops the animation
      */
     stop: function () {
         this.timeline.stop();
+        this.next();
     },
     curveProgress: function (t, weights, offset, chunk_size, points) {
         var currentCurveIndex = 0;
