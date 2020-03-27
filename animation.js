@@ -520,4 +520,4 @@ var AnimationUtils = {
     }
 };
 var Animation = AnimationUtils.make;
-export { Animation };
+export { Animation, Vector2 };
